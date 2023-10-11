@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "cool-print"
+version = "0.1.0"
+description = ""
+authors = ["Blackgolyb <andrejomelnickij@gmail.com>"]
+readme = "README.md"
+packages = [
+    { include = "cool_print" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+termcolor = "^2.3.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.2"
+black = "^23.9.1"
+ruff = "^0.0.292"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
