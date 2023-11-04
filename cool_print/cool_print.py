@@ -21,8 +21,8 @@ class CoolPrint:
         self.description_format = colored(self.description_format)
         self.variable_pattern = re.compile(r"^(\w+)\s*=\s*([^\s]*)$")
 
-    def _print_value(self, value, description=None):
-        formated_value = self.value_format.format(
+    def _format_text_value(self, value, description=None):
+        formatted_value = self.value_format.format(
             value=value,
         )
 
@@ -32,14 +32,14 @@ class CoolPrint:
             description = self.description_format.format(description=description)
 
         text = self.fmt.format(
-            expression=formated_value,
+            expression=formatted_value,
             description=description,
         )
 
-        print(text)
+        return text
 
-    def _print_variable(self, value, name, description=None):
-        formated_exp = self.variable_format.format(
+    def _format_text_variable(self, value, name, description=None):
+        formatted_exp = self.variable_format.format(
             name=name,
             value=value,
         )
@@ -50,20 +50,22 @@ class CoolPrint:
             description = self.description_format.format(description=description)
 
         text = self.fmt.format(
-            expression=formated_exp,
+            expression=formatted_exp,
             description=description,
         )
 
-        print(text)
+        return text
 
-    def _print(self, value, name=None, description=None):
+    def _format_text(self, value, name=None, description=None):
         value = self.value_formatter.format(value)
 
         if name is None:
-            self._print_value(value, description)
-            return
+            return self._format_text_value(value, description)
 
-        self._print_variable(value, name, description)
+        return self._format_text_variable(value, name, description)
+
+    def print(self, value, name=None, description=None):
+        print(self._format_text(value, name, description))
 
     def find_variable(self, value):
         if not isinstance(value, str):
@@ -88,18 +90,27 @@ class CoolPrint:
 
         return None
 
-    def __call__(self, value, guess_name=None, **kwargs):
-        if guess_name is None:
-            guess_name = self.guess_name
-
+    def parse_value(self, value, name=None, depth=2):
         variable = self.find_variable(value)
 
         if variable is not None:
-            kwargs["name"] = variable[0]
+            name = variable[0]
             value = variable[1]
-        elif guess_name and kwargs.get("name", None) is None:
-            name = self.guess_name_by_value(value, depth=2)
-            if name is not None:
-                kwargs["name"] = name
+        elif self.guess_name and name is None:
+            guesses_name = self.guess_name_by_value(value, depth=depth)
+            if guesses_name is not None:
+                name = guesses_name
 
-        self._print(value, **kwargs)
+        return value, name
+
+    def format(self, value: str, **kwargs) -> str:
+        value, name = self.parse_value(value, kwargs.get("name", None), depth=3)
+        kwargs["name"] = name
+
+        return self._format_text(value, **kwargs)
+
+    def __call__(self, value: str, **kwargs) -> None:
+        value, name = self.parse_value(value, kwargs.get("name", None), depth=3)
+        kwargs["name"] = name
+
+        self.print(value, **kwargs)
